@@ -1,0 +1,125 @@
+---
+title: "HW2"
+author: "Peter Chu"
+date: "10/16/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+
+library(knitr)
+library(tidymodels)
+library(tidyverse)
+library(yardstick)
+
+```
+
+Question 1.
+
+The distribution of ages among the abalones appears to be normal, but is right skewed a bit. The max age is 30.5, the min age is 2.5, and the average age is 11.43. Thus our summary statistics confirm that the graph is right skewed as more points lie closer to the min than the max. 
+
+```{r}
+data <- read_csv('abalone.csv')
+data$age <- data$rings + 1.5
+
+hist(data$age)
+summary(data$age)
+```
+
+
+Question 2.
+
+```{r}
+set.seed(100)
+
+data_split <- initial_split(data, prop = 0.8, strata = age)
+data_train <- training(data_split)
+data_tests <- testing(data_split)
+```
+
+
+Question 3.
+
+We shouldn't use rings to predict age, because we calculated age from rings. Thus age is dependent on the value of rings, so rings will most likely be able to predict age. It is clear that there is no point in checking if rings is a predictor since age is dependent on it.
+
+```{r}
+
+data_train_recipe <- recipe(age~ type + diameter + height + whole_weight + shucked_weight + viscera_weight + shell_weight + longest_shell, data = data_train) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_interact(terms = ~ starts_with('type'):shucked_weight) %>%
+  step_interact(terms = ~ shell_weight:shucked_weight) %>%
+  step_interact(terms = ~ longest_shell:diameter) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+data_train_recipe
+```
+
+
+Question 4.
+
+```{r}
+lm_model <- linear_reg() %>%
+  set_engine('lm')
+```
+
+
+Question 5.
+
+```{r}
+lm_wflow <- workflow() %>%
+  add_model(lm_model) %>%
+  add_recipe(data_train_recipe)
+
+```
+
+
+Question 6.
+
+```{r}
+
+lm_fit <- fit(lm_wflow, data_train)
+
+prediction <- predict(lm_fit, new_data = data.frame(longest_shell = 0.5, diameter = 0.1, height = 0.3, whole_weight = 4, shucked_weight = 1, viscera_weight = 2, shell_weight = 1, type = 'F'))
+
+prediction
+
+```
+
+
+
+Question 7.
+
+```{r}
+data_train_res <- predict(lm_fit, new_data = data_train %>% select(-age))
+data_train_res <- bind_cols(data_train_res, data_train %>% select(age))
+data_train_res %>% 
+  head()
+
+data_metric <- metric_set(rmse,rsq,mae)
+data_metric(data_train_res, truth = age, estimate = .pred)
+```
+
+Our $R^2$ value is 0.554 which means that about 55.4% of the variance in age, can be explained by the other independent variables. The MAE and RMSE are both 1.55 and 2.15, respectively,which shows that on average out model was about 1.5 years off when taking the absolute mean error and 2.55 years off when taking the quradtic mean error. Our prediction is about 1 ring off from actual. Thus, our $R^2$, MAE, and RMSE show that our model is not very good at predicting the actual age of abalone eggs. 
+
+
+
+
+Question 8.
+
+The reproducible error terms are $Var(\hat{f}(x_0)) + [Bias(\hat{f}(x_0))]^2$. This is because by having a more accurate $\hat{f}$, we can miniize its value. The terms which are irreducible error is $Var(\epsilon)$. This is because this is inherent to the data and can not be eliminated due to a choice of function. 
+
+Question 9.
+
+We know that $\text{Test Error} = E[(y_0-\hat{f}(x_0))^2]$, $Var(\epsilon) \geq 0$ and $[Bias(\hat{f}(x_0))]^2 \geq 0$. Thus $\text{Test Error} = E[(y_0-\hat{f}(x_0))^2] \geq 0 + 0 + Var(\epsilon) = Var(\epsilon)$. Thus we know that the Test Error is always greater than or equal to the irreducible error. 
+
+Question 10.
+
+By construction of the problem we have that $E[\epsilon] = 0, Var(\epsilon) = E[\epsilon^2]$ Thus we have that $E[(y_0 - \hat{f}(x_0))^2] = E[(f(x_0) + \epsilon - \hat{f}(x_0))^2] = E[(f(x_0) - \hat{f}(x_0))^2] + E[\epsilon^2] + 2E[(f(x_0)-\hat{f}(x_0)) * \epsilon] = E[(f(x_0)-\hat{f}(x_0))^2] + Var(\epsilon) + 2E(f(x_0) - \hat{f}(x_0)) * 0 = E[(f(x_0) - \hat{f}(x_0))^2]+ Var(\epsilon)$
+
+We also have that $E[(f(x_0) - \hat{f}(x_0))^2] = E[((f(x_0)-E[\hat{f}(x_0)]) - (\hat{f}(x_0) - E[\hat{f}(x_0)]))^2]= E[(E[\hat{f}(x_0)] - f(x_0))^2] + E[(\hat{f}(x_0) - E[\hat{f}(x_0)])^2] - 2E[(f(x)-E[\hat{f}(x_0)]) * (\hat{f}(x_0) - E[\hat{f}(x_0)])] = Bias(\hat{f}(x_0))^2 + Var(\hat{f}(x_0)) - 2E[(f(x)-E[\hat{f}(x_0)]) * (\hat{f}(x_0) - E[\hat{f}(x_0)]) = Bias(\hat{f}(x_0))^2 + Var(\hat{f}(x_0))$
+
+
+Thus when we combined these two equations we have that $E[(y_0 - \hat{f}(x_0))^2] = E[(f(x_0) - \hat{f}(x_0))^2]+ Var(\epsilon) \rightarrow E[(y_0 - \hat{f}(x_0))^2] = Bias(\hat{f}(x_0))^2 + Var(\hat{f}(x_0)) + Var(\epsilon)$
