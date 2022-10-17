@@ -18,8 +18,6 @@ library(yardstick)
 
 Question 1.
 
-The distribution of ages among the abalones appears to be normal, but is right skewed a bit. The max age is 30.5, the min age is 2.5, and the average age is 11.43. Thus our summary statistics confirm that the graph is right skewed as more points lie closer to the min than the max. 
-
 ```{r}
 data <- read_csv('abalone.csv')
 data$age <- data$rings + 1.5
@@ -27,6 +25,8 @@ data$age <- data$rings + 1.5
 hist(data$age)
 summary(data$age)
 ```
+
+The distribution of ages among the abalones appears to be normal, but is right skewed a bit. The max age is 30.5, the min age is 2.5, and the average age is 11.43. Thus our summary statistics confirm that the graph is right skewed as more points lie closer to the min than the max. 
 
 
 Question 2.
@@ -88,6 +88,7 @@ prediction
 
 ```
 
+Using our model, the predicted age for the female abalone with given traits is 20.5 years old
 
 
 Question 7.
@@ -105,21 +106,20 @@ data_metric(data_train_res, truth = age, estimate = .pred)
 Our $R^2$ value is 0.554 which means that about 55.4% of the variance in age, can be explained by the other independent variables. The MAE and RMSE are both 1.55 and 2.15, respectively,which shows that on average out model was about 1.5 years off when taking the absolute mean error and 2.55 years off when taking the quradtic mean error. Our prediction is about 1 ring off from actual. Thus, our $R^2$, MAE, and RMSE show that our model is not very good at predicting the actual age of abalone eggs. 
 
 
-
-
 Question 8.
 
 The reproducible error terms are $Var(\hat{f}(x_0)) + [Bias(\hat{f}(x_0))]^2$. This is because by having a more accurate $\hat{f}$, we can miniize its value. The terms which are irreducible error is $Var(\epsilon)$. This is because this is inherent to the data and can not be eliminated due to a choice of function. 
+
 
 Question 9.
 
 We know that $\text{Test Error} = E[(y_0-\hat{f}(x_0))^2]$, $Var(\epsilon) \geq 0$ and $[Bias(\hat{f}(x_0))]^2 \geq 0$. Thus $\text{Test Error} = E[(y_0-\hat{f}(x_0))^2] \geq 0 + 0 + Var(\epsilon) = Var(\epsilon)$. Thus we know that the Test Error is always greater than or equal to the irreducible error. 
 
+
 Question 10.
 
-By construction of the problem we have that $E[\epsilon] = 0, Var(\epsilon) = E[\epsilon^2]$ Thus we have that $E[(y_0 - \hat{f}(x_0))^2] = E[(f(x_0) + \epsilon - \hat{f}(x_0))^2] = E[(f(x_0) - \hat{f}(x_0))^2] + E[\epsilon^2] + 2E[(f(x_0)-\hat{f}(x_0)) * \epsilon] = E[(f(x_0)-\hat{f}(x_0))^2] + Var(\epsilon) + 2E(f(x_0) - \hat{f}(x_0)) * 0 = E[(f(x_0) - \hat{f}(x_0))^2]+ Var(\epsilon)$
+By construction of the problem we have that $E[\epsilon] = 0, Var(\epsilon) = E[\epsilon^2]$. Thus we have that $E[(y_0 - \hat{f}(x_0))^2] = E[(f(x_0) + \epsilon - \hat{f}(x_0))^2] = E[(f(x_0) - \hat{f}(x_0))^2] + E[\epsilon^2] + 2E[(f(x_0)-\hat{f}(x_0)) * \epsilon] = E[(f(x_0)-\hat{f}(x_0))^2] + Var(\epsilon) + 2E(f(x_0) - \hat{f}(x_0)) * 0 = E[(f(x_0) - \hat{f}(x_0))^2]+ Var(\epsilon)$
 
 We also have that $E[(f(x_0) - \hat{f}(x_0))^2] = E[((f(x_0)-E[\hat{f}(x_0)]) - (\hat{f}(x_0) - E[\hat{f}(x_0)]))^2]= E[(E[\hat{f}(x_0)] - f(x_0))^2] + E[(\hat{f}(x_0) - E[\hat{f}(x_0)])^2] - 2E[(f(x)-E[\hat{f}(x_0)]) * (\hat{f}(x_0) - E[\hat{f}(x_0)])] = Bias(\hat{f}(x_0))^2 + Var(\hat{f}(x_0)) - 2E[(f(x)-E[\hat{f}(x_0)]) * (\hat{f}(x_0) - E[\hat{f}(x_0)]) = Bias(\hat{f}(x_0))^2 + Var(\hat{f}(x_0))$
-
 
 Thus when we combined these two equations we have that $E[(y_0 - \hat{f}(x_0))^2] = E[(f(x_0) - \hat{f}(x_0))^2]+ Var(\epsilon) \rightarrow E[(y_0 - \hat{f}(x_0))^2] = Bias(\hat{f}(x_0))^2 + Var(\hat{f}(x_0)) + Var(\epsilon)$
